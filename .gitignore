@@ -1,3 +1,22 @@
 .history
-resilient-sdk/sdk/node_modules/*
-resilient-sdk/sdk/dist/*
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

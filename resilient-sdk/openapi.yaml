@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: ResilientDB API
+  description: Key-Value Querying Interface for ResilientDB
+  version: 2.0.0
+  contact:
+    name: ResilientDB Team
+servers:
+  - url: http://54.204.140.141:18000
+    description: Development server
+paths:
+  /v2/transactions/get:
+    post:
+      summary: Get transactions by filter
+      description: Retrieve data from a collection using key-value filters
+      operationId: find
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTransactionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v2/transactions/commit:
+    post:
+      summary: Commit a transaction
+      description: Insert, update data or create collections
+      operationId: commitTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitTransactionRequest'
+      responses:
+        '200':
+          description: Transaction committed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitTransactionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    GetTransactionRequest:
+      type: object
+      required:
+        - collection_name
+        - filter_key
+        - filter_value
+      properties:
+        collection_name:
+          type: string
+          description: Name of the collection to query
+          example: "users"
+        filter_key:
+          type: string
+          description: Key to filter by
+          example: "age"
+        filter_value:
+          type: string
+          description: Value to filter for
+          example: "30"
+    GetTransactionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+          example: "success"
+        data:
+          type: string
+          description: JSON string containing the filtered data
+          example: "[{\"age\":30,\"name\":\"user_1\"},{\"age\":30,\"name\":\"user_2\"},{\"age\":30,\"name\":\"user_3\"}]"
+    CreateCollectionRequest:
+      type: object
+      required:
+        - collection_name
+        - options
+        - schema
+      properties:
+        collection_name:
+          type: string
+          description: Name of the collection to create
+          example: "users"
+        options:
+          type: object
+          properties:
+            primary_key:
+              type: string
+              description: Primary key field name
+              example: "id"
+            secondary_key:
+              type: string
+              description: Secondary key field name
+              example: "age"
+            filter_policy:
+              type: string
+              description: Filter policy for the collection
+              example: "leveldb.BuiltinBloomFilter"
+            filter_policy_bits_per_key:
+              type: integer
+              description: Filter policy bits per key
+              example: 20
+        schema:
+          type: object
+          required:
+            - fields
+            - required
+          properties:
+            fields:
+              type: array
+              items:
+                type: object
+                additionalProperties:
+                  type: string
+              description: Field definitions for the collection
+              example: [
+                {"id": "integer"},
+                {"age": "integer"},
+                {"name": "string"}
+              ]
+            required:
+              type: array
+              items:
+                type: string
+              description: Required field names
+              example: ["id", "age"]
+    CreateCollectionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+          example: "success"
+        message:
+          type: string
+          description: Success message
+          example: "Collection created successfully"
+    CommitTransactionRequest:
+      type: object
+      required:
+        - id
+        - value
+      properties:
+        id:
+          type: string
+          description: Transaction type (INSERT, CREATE_COLLECTION, etc.)
+          example: "INSERT"
+        value:
+          type: object
+          required:
+            - collection_name
+          properties:
+            collection_name:
+              type: string
+              description: Name of the collection
+              example: "users"
+            value:
+              type: object
+              description: Data to insert/update/delete (for INSERT transactions)
+              example:
+                id: 13
+                age: 71
+                name: "user_13"
+            options:
+              type: object
+              description: Collection options (for CREATE_COLLECTION transactions)
+              example:
+                primary_key: "id"
+                secondary_key: "age"
+                filter_policy: "leveldb.BuiltinBloomFilter"
+                filter_policy_bits_per_key: 20
+            schema:
+              type: object
+              description: Collection schema (for CREATE_COLLECTION transactions)
+              example:
+                fields: [{"id": "integer"}, {"age": "integer"}, {"name": "string"}]
+                required: ["id", "age"]
+    CommitTransactionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+          example: "success"
+        message:
+          type: string
+          description: Response message
+          example: "Transaction committed successfully"
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          example: "error"
+        message:
+          type: string
+          description: Error message
+          example: "Invalid request parameters"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_REQUEST" 
