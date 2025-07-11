@@ -24,6 +24,15 @@ export interface CollectionSchema {
   required: string[];
 }
 
+// Type for single key-value pair filter
+type SingleKeyFilter<T> = {
+  [K in keyof T]: { [P in K]: T[P] }
+}[keyof T];
+
+type StrictSingleKey<T> = {
+  [K in keyof T]: { [P in K]: T[P] } & { [Q in Exclude<keyof T, K>]?: never }
+}[keyof T];
+
 // Type mapping for TypeScript types to database types
 type TypeMapping = {
   string: 'string';
@@ -90,10 +99,11 @@ export class ResilientDB {
 
   /**
    * Get transactions by filter with type inference
+   * Note: Only the first field in the filter object will be used
    */
   async find<T = any>(
     collectionName: string,
-    filter: Partial<T>
+    filter: StrictSingleKey<T>
   ): Promise<T[]> {
     try {
       // Get the first filter key-value pair
@@ -145,7 +155,7 @@ export class ResilientDB {
   }
 
   /**
-   * Find a record by ID with type inference
+   * Find a record by primary key ID
    */
   async findById<T = any>(
     collectionName: string,
@@ -215,7 +225,7 @@ export class ResilientDB {
       });
       console.log("Response:", JSON.stringify(response, null, 2));
       if (response.status !== 'success') {
-        throw new Error(`Failed to commit transaction: ${transactionId}`);
+        throw new Error(`Failed to commit transaction: ${transactionId} ${response?.message}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

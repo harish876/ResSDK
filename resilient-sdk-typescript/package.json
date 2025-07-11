@@ -1,7 +1,7 @@
 {
   "name": "resilient-sdk",
   "version": "1.0.0",
-  "description": "ResilientDB SDK for Key-Value Querying Interface",
+  "description": "ResilientDB SDK for V2 Querying Interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
